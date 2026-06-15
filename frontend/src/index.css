@@ -1,0 +1,167 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-surface-900 text-white font-sans antialiased;
+    background: linear-gradient(180deg, #0f0f1a 0%, #151528 100%);
+    min-height: 100vh;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-surface-800;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-brand-600 rounded-full;
+  }
+
+  ::selection {
+    @apply bg-brand-500/30 text-white;
+  }
+}
+
+@layer components {
+  /* ── Glass card ─────────────────────────── */
+  .glass-card {
+    @apply bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+
+  /* ── Gradient button ─────────────────────── */
+  .btn-primary {
+    @apply inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm
+           bg-gradient-to-r from-brand-600 to-purple-600 text-white
+           hover:from-brand-500 hover:to-purple-500
+           active:scale-95 transition-all duration-200
+           shadow-lg shadow-brand-900/50;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm
+           bg-white/10 border border-white/15 text-white
+           hover:bg-white/15
+           active:scale-95 transition-all duration-200;
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm
+           bg-red-500/20 border border-red-500/30 text-red-400
+           hover:bg-red-500/30
+           active:scale-95 transition-all duration-200;
+  }
+
+  /* ── Form input ─────────────────────────── */
+  .input-field {
+    @apply w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white
+           placeholder:text-white/30
+           focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50
+           transition-all duration-200;
+  }
+
+  .input-label {
+    @apply block text-xs font-medium text-white/60 mb-1.5 uppercase tracking-wider;
+  }
+
+  /* ── Badge ──────────────────────────────── */
+  .badge {
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .badge-green {
+    @apply badge bg-emerald-500/20 text-emerald-400 border border-emerald-500/30;
+  }
+
+  .badge-red {
+    @apply badge bg-red-500/20 text-red-400 border border-red-500/30;
+  }
+
+  .badge-yellow {
+    @apply badge bg-yellow-500/20 text-yellow-400 border border-yellow-500/30;
+  }
+
+  .badge-blue {
+    @apply badge bg-blue-500/20 text-blue-400 border border-blue-500/30;
+  }
+
+  .badge-purple {
+    @apply badge bg-purple-500/20 text-purple-400 border border-purple-500/30;
+  }
+
+  /* ── Status indicators ──────────────────── */
+  .status-clean::before {
+    content: '✅';
+    margin-right: 4px;
+  }
+
+  .status-warning::before {
+    content: '⚠️';
+    margin-right: 4px;
+  }
+
+  .status-error::before {
+    content: '❌';
+    margin-right: 4px;
+  }
+
+  /* ── Gradient text ──────────────────────── */
+  .gradient-text {
+    @apply bg-gradient-to-r from-brand-400 to-purple-400 bg-clip-text text-transparent;
+  }
+
+  /* ── Table ──────────────────────────────── */
+  .data-table th {
+    @apply text-xs font-semibold text-white/50 uppercase tracking-wider px-4 py-3 text-left;
+  }
+
+  .data-table td {
+    @apply px-4 py-3 text-sm text-white/80 border-t border-white/5;
+  }
+
+  .data-table tr:hover td {
+    @apply bg-white/5;
+  }
+
+  /* ── Stepper ────────────────────────────── */
+  .step-inactive {
+    @apply w-8 h-8 rounded-full border-2 border-white/20 flex items-center justify-center
+           text-sm font-bold text-white/40;
+  }
+
+  .step-active {
+    @apply w-8 h-8 rounded-full border-2 border-brand-500 flex items-center justify-center
+           text-sm font-bold text-brand-400 shadow-glow;
+  }
+
+  .step-done {
+    @apply w-8 h-8 rounded-full bg-brand-600 flex items-center justify-center
+           text-sm font-bold text-white;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Animated gradient border */
+  .border-gradient {
+    border: 1px solid transparent;
+    background: linear-gradient(#151528, #151528) padding-box,
+                linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899) border-box;
+  }
+}
