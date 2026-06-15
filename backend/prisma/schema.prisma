@@ -1,0 +1,265 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────
+// USERS
+// ─────────────────────────────────────────────────────────────
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relations
+  createdGroups      Group[]           @relation("GroupCreator")
+  memberships        GroupMembership[]
+  paidExpenses       Expense[]         @relation("ExpensePayer")
+  expenseSplits      ExpenseSplit[]
+  settlementsFrom    Settlement[]      @relation("SettlementFrom")
+  settlementsTo      Settlement[]      @relation("SettlementTo")
+  importedSessions   ImportSession[]
+  resolvedAnomalies  ImportAnomaly[]   @relation("AnomalyResolver")
+  activityLogs       ActivityLog[]
+  deletedExpenses    Expense[]         @relation("ExpenseDeleter")
+
+  @@map("users")
+}
+
+// ─────────────────────────────────────────────────────────────
+// GROUPS
+// ─────────────────────────────────────────────────────────────
+model Group {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  createdBy String   @map("created_by")
+
+  // Relations
+  creator     User              @relation("GroupCreator", fields: [createdBy], references: [id])
+  memberships GroupMembership[]
+  expenses    Expense[]
+  settlements Settlement[]
+  sessions    ImportSession[]
+  activities  ActivityLog[]
+
+  @@map("groups")
+}
+
+// ─────────────────────────────────────────────────────────────
+// GROUP MEMBERSHIPS
+// left_at IS NULL means member is still active.
+// Balance calculations MUST filter expenses by joined_at <= expense_date <= left_at (or NOW).
+// ─────────────────────────────────────────────────────────────
+model GroupMembership {
+  id       String    @id @default(uuid())
+  groupId  String    @map("group_id")
+  userId   String    @map("user_id")
+  joinedAt DateTime  @map("joined_at")
+  leftAt   DateTime? @map("left_at") // null = currently active
+
+  // Relations
+  group Group @relation(fields: [groupId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@unique([groupId, userId])
+  @@map("group_memberships")
+}
+
+// ─────────────────────────────────────────────────────────────
+// EXPENSES
+// amount_inr is always set. For INR expenses it equals total_amount.
+// For USD expenses, amount_inr = total_amount * exchange_rate_used.
+// is_deleted: soft delete — never hard delete.
+// is_recurring: marks a recurring expense template.
+// ─────────────────────────────────────────────────────────────
+model Expense {
+  id              String    @id @default(uuid())
+  groupId         String    @map("group_id")
+  description     String
+  totalAmount     Decimal   @map("total_amount") @db.Decimal(12, 2)
+  currency        String    @default("INR") // "INR" | "USD"
+  amountInr       Decimal   @map("amount_inr") @db.Decimal(12, 2) // always in INR
+  exchangeRateUsed Decimal? @map("exchange_rate_used") @db.Decimal(10, 4) // USD->INR rate used
+  splitType       SplitType @map("split_type")
+  paidBy          String    @map("paid_by")
+  expenseDate     DateTime  @map("expense_date") @db.Date
+  createdAt       DateTime  @default(now()) @map("created_at")
+  isDeleted       Boolean   @default(false) @map("is_deleted")
+  deletedAt       DateTime? @map("deleted_at")
+  deletedBy       String?   @map("deleted_by")
+  importRowId     String?   @map("import_row_id") // links to import_anomalies.id if from CSV
+  isRecurring     Boolean   @default(false) @map("is_recurring")
+  recurringInterval String? @map("recurring_interval") // "monthly" | "weekly"
+
+  // Relations
+  group       Group          @relation(fields: [groupId], references: [id])
+  payer       User           @relation("ExpensePayer", fields: [paidBy], references: [id])
+  deleter     User?          @relation("ExpenseDeleter", fields: [deletedBy], references: [id])
+  splits      ExpenseSplit[]
+  @@map("expenses")
+}
+
+enum SplitType {
+  equal
+  exact
+  percentage
+  shares
+}
+
+// ─────────────────────────────────────────────────────────────
+// EXPENSE SPLITS
+// Exactly one row per (expense, user) pair.
+// share_amount: the INR amount this user owes for this expense.
+// share_pct: used when split_type = percentage.
+// share_units: used when split_type = shares.
+// ─────────────────────────────────────────────────────────────
+model ExpenseSplit {
+  id          String  @id @default(uuid())
+  expenseId   String  @map("expense_id")
+  userId      String  @map("user_id")
+  shareAmount Decimal @map("share_amount") @db.Decimal(12, 2) // INR owed by this user
+  sharePct    Decimal? @map("share_pct") @db.Decimal(6, 3)   // for percentage splits
+  shareUnits  Int?    @map("share_units")                     // for shares splits
+
+  // Relations
+  expense Expense @relation(fields: [expenseId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@unique([expenseId, userId])
+  @@map("expense_splits")
+}
+
+// ─────────────────────────────────────────────────────────────
+// SETTLEMENTS
+// Records actual money transfers between members.
+// from_user paid to_user the given amount.
+// ─────────────────────────────────────────────────────────────
+model Settlement {
+  id         String   @id @default(uuid())
+  groupId    String   @map("group_id")
+  fromUser   String   @map("from_user")
+  toUser     String   @map("to_user")
+  amount     Decimal  @db.Decimal(12, 2)
+  settledAt  DateTime @default(now()) @map("settled_at")
+  note       String?
+
+  // Relations
+  group Group @relation(fields: [groupId], references: [id])
+  payer User  @relation("SettlementFrom", fields: [fromUser], references: [id])
+  payee User  @relation("SettlementTo", fields: [toUser], references: [id])
+
+  @@map("settlements")
+}
+
+// ─────────────────────────────────────────────────────────────
+// IMPORT SESSIONS
+// One record per CSV upload attempt.
+// report_json: full import report stored as JSON.
+// ─────────────────────────────────────────────────────────────
+model ImportSession {
+  id          String        @id @default(uuid())
+  groupId     String        @map("group_id")
+  filename    String
+  importedAt  DateTime      @default(now()) @map("imported_at")
+  importedBy  String        @map("imported_by")
+  status      ImportStatus  @default(PENDING)
+  totalRows   Int           @default(0) @map("total_rows")
+  importedRows Int          @default(0) @map("imported_rows")
+  skippedRows Int           @default(0) @map("skipped_rows")
+  reportJson  Json?         @map("report_json") // final import report
+
+  // Relations
+  group     Group           @relation(fields: [groupId], references: [id])
+  importer  User            @relation(fields: [importedBy], references: [id])
+  anomalies ImportAnomaly[]
+
+  @@map("import_sessions")
+}
+
+enum ImportStatus {
+  PENDING
+  REVIEWING
+  CONFIRMED
+  COMPLETED
+  FAILED
+}
+
+// ─────────────────────────────────────────────────────────────
+// IMPORT ANOMALIES
+// One row per detected problem in the CSV.
+// resolution: set by the user during Anomaly Review step.
+// resolved_by / resolved_at: audit trail for who resolved it.
+// ─────────────────────────────────────────────────────────────
+model ImportAnomaly {
+  id            String           @id @default(uuid())
+  sessionId     String           @map("session_id")
+  rowNumber     Int              @map("row_number")
+  rawRow        Json             @map("raw_row")       // the original CSV row as JSON
+  anomalyType   String           @map("anomaly_type")  // e.g. "DUPLICATE_EXACT"
+  anomalyDetail String           @map("anomaly_detail") // human-readable explanation
+  resolution    AnomalyResolution @default(PENDING)
+  resolvedBy    String?          @map("resolved_by")
+  resolvedAt    DateTime?        @map("resolved_at")
+  overrideData  Json?            @map("override_data") // user-provided corrections
+
+  // Relations
+  session    ImportSession @relation(fields: [sessionId], references: [id])
+  resolver   User?         @relation("AnomalyResolver", fields: [resolvedBy], references: [id])
+  @@map("import_anomalies")
+}
+
+enum AnomalyResolution {
+  PENDING
+  DELETE   // discard this row
+  KEEP     // import as-is despite anomaly
+  MERGE    // merge with duplicate
+  OVERRIDE // import with user-provided corrections
+  SKIP     // skip silently (only for MISSING_FIELD rejects)
+}
+
+// ─────────────────────────────────────────────────────────────
+// EXCHANGE RATE CACHE
+// Caches historical USD->INR rates to avoid repeated API calls.
+// ─────────────────────────────────────────────────────────────
+model ExchangeRateCache {
+  id           String   @id @default(uuid())
+  date         DateTime @db.Date
+  fromCurrency String   @map("from_currency")
+  toCurrency   String   @map("to_currency")
+  rate         Decimal  @db.Decimal(10, 4)
+  fetchedAt    DateTime @default(now()) @map("fetched_at")
+
+  @@unique([date, fromCurrency, toCurrency])
+  @@map("exchange_rate_cache")
+}
+
+// ─────────────────────────────────────────────────────────────
+// ACTIVITY LOG
+// Timestamped log of every action in the group.
+// e.g. "Rohan added dinner ₹800", "Aisha settled ₹2300 with Rohan"
+// ─────────────────────────────────────────────────────────────
+model ActivityLog {
+  id          String   @id @default(uuid())
+  groupId     String   @map("group_id")
+  userId      String   @map("user_id")
+  action      String   // e.g. "EXPENSE_ADDED", "SETTLEMENT_RECORDED", "MEMBER_JOINED"
+  description String   // human-readable e.g. "Rohan added Dinner ₹800"
+  metadata    Json?    // additional context (expenseId, amount, etc.)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  group Group @relation(fields: [groupId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@map("activity_log")
+}
