@@ -1,0 +1,59 @@
+date,description,amount,currency,paid_by,split_among,split_type,notes
+2026-02-01,Groceries,1200,INR,Aisha,"Aisha,Rohan,Priya,Meera",equal,Weekly grocery run
+2026-02-03,Electricity bill,2400,INR,Rohan,"Aisha,Rohan,Priya,Meera",equal,February electricity
+2026-02-07,Netflix subscription,649,INR,Priya,"Aisha,Rohan,Priya,Meera",equal,Monthly subscription
+2026-02-10,Groceries,1200,INR,Aisha,"Aisha,Rohan,Priya,Meera",equal,Weekly grocery run
+2026-02-14,Dinner out,3200,INR,Meera,"Aisha,Rohan,Priya,Meera",equal,Valentine's dinner
+2026-02-15,Internet bill,1499,INR,Aisha,"Aisha,Rohan,Priya,Meera",equal,Monthly internet
+2026-02-18,House cleaning supplies,850,INR,Priya,"Aisha,Rohan,Priya,Meera",equal,Cleaning products
+2026-02-21,Groceries,1350,INR,Rohan,"Aisha,Rohan,Priya,Meera",equal,Weekly grocery run
+2026-02-25,Water bill,600,INR,Meera,"Aisha,Rohan,Priya,Meera",equal,February water
+2026-02-28,Movie night snacks,480,INR,Aisha,"Aisha,Rohan,Priya,Meera",equal,Movie night
+2026-03-01,Groceries,1100,INR,Rohan,"Aisha,Rohan,Priya,Meera",equal,Weekly grocery run
+2026-03-04,Electricity bill,2200,INR,Priya,"Aisha,Rohan,Priya,Meera",equal,March electricity
+2026-03-08,Holi party supplies,2800,INR,Aisha,"Aisha,Rohan,Priya,Meera",equal,Holi celebration
+2026-03-10,Dev visit dinner,$85,USD,Dev,"Aisha,Rohan,Priya,Meera,Dev",equal,Dev joined for dinner
+2026-03-12,Dev trip groceries,45.50,USD,Dev,"Rohan,Priya,Dev",equal,Trip groceries
+2026-03-14,Groceries,1250,INR,Priya,"Aisha,Rohan,Priya,Meera",equal,Weekly grocery run
+2026-03-18,Internet bill,1499,INR,Rohan,"Aisha,Rohan,Priya,Meera",equal,Monthly internet
+2026-03-20,House party food,4500,INR,Meera,"Aisha,Rohan,Priya,Meera",equal,House party
+2026-03-25,Groceries,1100,INR,Aisha,"Aisha,Rohan,Priya,Meera",equal,Weekly grocery run
+2026-03-28,Electricity bill,2200,INR,Priya,"Aisha,Rohan,Priya,Meera",equal,March electricity
+2026-03-31,Meera farewell dinner,5500,INR,Rohan,"Aisha,Rohan,Priya,Meera",equal,Farewell dinner for Meera
+2026-03-14,Groceries,1250,INR,Priya,"Aisha,Rohan,Priya,Meera",equal,Weekly grocery run
+2026-04-01,Aisha settled with Rohan,2300,INR,Aisha,Rohan,equal,Settled old debt
+2026-04-02,Groceries,1300,INR,Rohan,"Aisha,Rohan,Priya",equal,Weekly grocery run
+2026-04-05,Electricity bill,2100,INR,Aisha,"Aisha,Rohan,Priya",equal,April electricity
+2026-04-08,Netflix subscription,649,INR,Priya,"Aisha,Rohan,Priya",equal,Monthly subscription
+2026-04-10,Internet bill,1499,INR,Rohan,"Aisha,Rohan,Priya",equal,Monthly internet
+2026-04-12,Rohan paid back Priya,1800,INR,Rohan,Priya,equal,Paid back old dues
+2026-04-14,Flat supplies,950,INR,Priya,"Aisha,Rohan,Priya",equal,April cleaning supplies
+2026-04-15,Sam welcome dinner,3600,INR,Aisha,"Aisha,Rohan,Priya,Sam",equal,Welcome dinner for Sam
+2026-04-15,Groceries,1400,INR,Sam,"Aisha,Rohan,Priya,Sam",equal,Weekly grocery run
+2026-04-18,Water bill,600,INR,Rohan,"Aisha,Rohan,Priya,Sam",equal,April water
+2026-04-20,Groceries,0,INR,Aisha,"Aisha,Rohan,Priya,Sam",equal,Zero entry - data error?
+2026-04-22,OTT bundle,899,INR,Sam,"Aisha,Rohan,Priya,Sam",equal,Netflix + Prime bundle
+2026-04-25,Groceries,1500,INR,Priya,"Aisha,Rohan,Priya,Sam",equal,Weekly grocery run
+2026-04-28,Electricity bill,2300,INR,Aisha,"Aisha,Rohan,Priya,Sam",equal,April electricity
+2026-04-30,Meera contribution refund,-800,INR,Aisha,Meera,exact,Refund for overbilled month
+05/01/2026,Groceries,1250,INR,Rohan,"Aisha,Rohan,Priya,Sam",equal,Weekly grocery run
+05-03-2026,May electricity,2400,INR,Sam,"Aisha,Rohan,Priya,Sam",equal,May electricity bill
+2026-05-05,Internet bill,1499,INR,Priya,"Aisha,Rohan,Priya,Sam",equal,Monthly internet
+2026-05-08,House party,6000,INR,Rohan,"Aisha,Rohan,Priya,Sam",percentage,Rohan=40;Sam=30;Priya=20;Aisha=10
+2026-05-10,Groceries,1400,INR,Sam,"Aisha,Rohan,Priya,Sam",equal,Weekly grocery run
+2026-05-12,Dinner out,2800,INR,Aisha,"Aisha,Rohan,Priya,Sam",exact,Aisha=800;Rohan=700;Priya=700;Sam=500
+2026-05-12,Dinner out,3100,INR,Aisha,"Aisha,Rohan,Priya,Sam",exact,Corrected dinner amount
+2026-05-15,Movie tickets,1200,INR,Priya,"Aisha,Rohan,Priya,Sam",equal,Movie night
+2026-05-18,Groceries,1350,INR,Rohan,"Aisha,Rohan,Priya,Sam",equal,Weekly grocery run
+2026-05-20,AC servicing,3500,INR,Sam,"Aisha,Rohan,Priya,Sam",shares,Aisha=2;Rohan=2;Priya=1;Sam=1
+2026-05-22,Groceries,1300,INR,Devraj,"Aisha,Rohan,Priya,Sam",equal,Unknown payer
+2026-05-25,Electricity bill,2200,INR,Aisha,"Aisha,Rohan,Priya,Sam",equal,May electricity
+2026-05-28,Water bill,600,INR,Rohan,"Aisha,Rohan,Priya,Sam",equal,May water
+2026-06-01,Groceries,1400,INR,Sam,"Aisha,Rohan,Priya,Sam",equal,Weekly grocery run
+2026-06-03,June electricity,2500,INR,Priya,"Aisha,Rohan,Priya,Sam",equal,June electricity
+2026-06-05,Internet bill,1499,USD,Aisha,"Aisha,Rohan,Priya,Sam",equal,Internet via USD account
+2026-06-08,Meera trip contribution,1200,INR,Aisha,"Aisha,Rohan,Priya,Sam,Meera",equal,Old trip expense involving Meera
+2026-06-10,Groceries,1500,INR,Rohan,"Aisha,Rohan,Priya,Sam",equal,Weekly grocery run
+,House repair,4200,INR,Priya,"Aisha,Rohan,Priya,Sam",equal,Missing date field
+2026-05-12,Dinner out,2800,INR,Aisha,"Aisha,Rohan,Priya,Sam",exact,Aisha=800;Rohan=700;Priya=700;Sam=500
+2026-05-08,House party,6000,INR,Rohan,"Aisha,Rohan,Priya,Sam",percentage,Rohan=40;Sam=30;Priya=20;Aisha=10
