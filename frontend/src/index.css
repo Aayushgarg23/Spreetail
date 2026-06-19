@@ -74,10 +74,6 @@
            transition-all duration-300;
   }
 
-  .input-field option {
-    @apply bg-surface-900 text-white;
-  }
-
   .input-label {
     @apply block text-xs font-medium text-white/60 mb-1.5 uppercase tracking-wider;
   }

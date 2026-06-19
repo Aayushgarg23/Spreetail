@@ -368,7 +368,7 @@ function StepAnomalyReview({ sessionId, session, onRefresh, onNext, onBack }) {
     ids.forEach((id) => (newRes[id] = resolution));
     setResolutions((prev) => ({ ...prev, ...newRes }));
     try {
-      await importApi.bulkResolve(sessionId, { anomalyIds: ids, resolution });
+      await importApi.bulkResolve(sessionId, { ids, resolution });
       onRefresh?.();
     } catch {
       // optimistic update stays
