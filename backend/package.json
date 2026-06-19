@@ -7,6 +7,7 @@
     "dev": "nodemon src/app.js",
     "start": "node src/app.js",
     "test": "jest --runInBand --forceExit",
+    "test:integration": "jest --runInBand --forceExit tests/**/*.integration.test.js",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
     "db:seed": "node prisma/seed.js",
@@ -33,7 +34,10 @@
   },
   "jest": {
     "testEnvironment": "node",
-    "testMatch": ["**/tests/**/*.test.js"],
+    "testMatch": [
+      "**/tests/**/*.test.js",
+      "!**/tests/**/*.integration.test.js"
+    ],
     "coverageDirectory": "coverage"
   }
 }

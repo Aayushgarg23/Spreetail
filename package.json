@@ -1,0 +1,16 @@
+{
+  "name": "spreetail",
+  "version": "1.0.0",
+  "description": "Shared expenses app for flatmates — monorepo root",
+  "private": true,
+  "scripts": {
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "test": "cd backend && npm test",
+    "install:all": "cd backend && npm install && cd ../frontend && npm install",
+    "db:migrate": "cd backend && npx prisma migrate dev",
+    "db:seed": "cd backend && node prisma/seed.js",
+    "db:studio": "cd backend && npx prisma studio",
+    "build:frontend": "cd frontend && npm run build"
+  }
+}

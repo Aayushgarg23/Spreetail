@@ -155,8 +155,8 @@ function parseAndDetect(csvBuffer, knownUsers = [], memberships = []) {
       description: raw.description || raw.Description || '',
       amount: null,
       currency: (raw.currency || raw.Currency || 'INR').toUpperCase(),
-      paidBy: raw.paid_by || raw.paidBy || '',
-      splitAmong: parseSplitAmong(raw.split_among || raw.splitAmong || ''),
+      paidBy: raw.paid_by || raw.paidBy || raw.Paid_By || '',
+      splitAmong: parseSplitAmong(raw.split_among || raw.splitAmong || raw.split_with || ''),
       splitType: (raw.split_type || raw.splitType || 'equal').toLowerCase(),
       notes: raw.notes || '',
       anomalies: [],
@@ -409,7 +409,8 @@ function parseAndDetect(csvBuffer, knownUsers = [], memberships = []) {
 
 function parseSplitAmong(raw) {
   if (!raw) return [];
-  return raw.split(',').map((s) => s.trim()).filter(Boolean);
+  // Support both comma and semicolon separators
+  return String(raw).split(/[,;]/).map((s) => s.trim()).filter(Boolean);
 }
 
 function countByType(anomalies) {
