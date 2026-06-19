@@ -338,9 +338,16 @@ function StepAnomalyReview({ sessionId, session, onRefresh, onNext, onBack }) {
   const [resolutions, setResolutions] = useState({});
   const [batchLoading, setBatchLoading] = useState(false);
 
+  const getSeverity = (a) => {
+    if (a.severity) return a.severity.toLowerCase();
+    const type = a.anomalyType || a.type || '';
+    if (['MISSING_REQUIRED_FIELD', 'INCONSISTENT_DATE_FORMAT', 'NEGATIVE_AMOUNT', 'SETTLEMENT_AS_EXPENSE', 'ZERO_AMOUNT'].includes(type)) return 'error';
+    return 'warning';
+  };
+
   const filtered = anomalies.filter((a) => {
-    if (filter === 'warnings') return a.severity?.toLowerCase() === 'warning' || a.type?.toLowerCase() === 'warning' || a.anomalyType?.toLowerCase() === 'warning';
-    if (filter === 'errors') return a.severity?.toLowerCase() === 'error' || a.type?.toLowerCase() === 'error' || a.anomalyType?.toLowerCase() === 'error';
+    if (filter === 'warnings') return getSeverity(a) === 'warning';
+    if (filter === 'errors') return getSeverity(a) === 'error';
     if (filter === 'pending')
       return !(resolutions[a.id] || a.resolution);
     return true;
@@ -362,7 +369,7 @@ function StepAnomalyReview({ sessionId, session, onRefresh, onNext, onBack }) {
   const batchResolve = async (severity, resolution) => {
     setBatchLoading(true);
     const ids = anomalies
-      .filter((a) => a.severity === severity && !(resolutions[a.id] || a.resolution))
+      .filter((a) => getSeverity(a) === severity && !(resolutions[a.id] || a.resolution))
       .map((a) => a.id);
     const newRes = {};
     ids.forEach((id) => (newRes[id] = resolution));
@@ -381,8 +388,8 @@ function StepAnomalyReview({ sessionId, session, onRefresh, onNext, onBack }) {
 
   const FILTERS = [
     { key: 'all', label: 'All', count: anomalies.length },
-    { key: 'warnings', label: '&#x26A0;&#xFE0F; Warnings', count: anomalies.filter((a) => a.severity?.toLowerCase() === 'warning' || a.type?.toLowerCase() === 'warning' || a.anomalyType?.toLowerCase() === 'warning').length },
-    { key: 'errors', label: '&#x274C; Errors', count: anomalies.filter((a) => a.severity?.toLowerCase() === 'error' || a.type?.toLowerCase() === 'error' || a.anomalyType?.toLowerCase() === 'error').length },
+    { key: 'warnings', label: '&#x26A0;&#xFE0F; Warnings', count: anomalies.filter((a) => getSeverity(a) === 'warning').length },
+    { key: 'errors', label: '&#x274C; Errors', count: anomalies.filter((a) => getSeverity(a) === 'error').length },
     { key: 'pending', label: '&#x23F3; Pending', count: unresolvedCount },
   ];
 
@@ -463,9 +470,9 @@ function StepAnomalyReview({ sessionId, session, onRefresh, onNext, onBack }) {
                       <span className="text-xs text-white/40 font-mono">Row {anomaly.rowNumber ?? i + 1}</span>
                       <span
                         className={`badge text-xs ${
-                          (anomaly.severity?.toLowerCase() === 'error' || anomaly.type?.toLowerCase() === 'error' || anomaly.anomalyType?.toLowerCase() === 'error')
+                          getSeverity(anomaly) === 'error'
                             ? 'badge-red'
-                            : (anomaly.severity?.toLowerCase() === 'warning' || anomaly.type?.toLowerCase() === 'warning' || anomaly.anomalyType?.toLowerCase() === 'warning')
+                            : getSeverity(anomaly) === 'warning'
                             ? 'badge-yellow'
                             : 'badge-blue'
                         }`}
