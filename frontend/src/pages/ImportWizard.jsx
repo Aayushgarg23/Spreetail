@@ -346,16 +346,17 @@ function StepAnomalyReview({ sessionId, session, onRefresh, onNext, onBack }) {
   };
 
   const filtered = anomalies.filter((a) => {
+    const isPending = !(resolutions[a.id] || a.resolution) || (resolutions[a.id] || a.resolution) === 'PENDING';
     if (filter === 'warnings') return getSeverity(a) === 'warning';
     if (filter === 'errors') return getSeverity(a) === 'error';
-    if (filter === 'pending')
-      return !(resolutions[a.id] || a.resolution);
+    if (filter === 'pending') return isPending;
     return true;
   });
 
-  const unresolvedCount = anomalies.filter(
-    (a) => !(resolutions[a.id] || a.resolution)
-  ).length;
+  const unresolvedCount = anomalies.filter((a) => {
+    const res = resolutions[a.id] || a.resolution;
+    return !res || res === 'PENDING';
+  }).length;
 
   const setResolution = async (anomalyId, value) => {
     setResolutions((prev) => ({ ...prev, [anomalyId]: value }));
@@ -369,7 +370,10 @@ function StepAnomalyReview({ sessionId, session, onRefresh, onNext, onBack }) {
   const batchResolve = async (severity, resolution) => {
     setBatchLoading(true);
     const ids = anomalies
-      .filter((a) => getSeverity(a) === severity && !(resolutions[a.id] || a.resolution))
+      .filter((a) => {
+        const isPending = !(resolutions[a.id] || a.resolution) || (resolutions[a.id] || a.resolution) === 'PENDING';
+        return getSeverity(a) === severity && isPending;
+      })
       .map((a) => a.id);
     const newRes = {};
     ids.forEach((id) => (newRes[id] = resolution));
@@ -454,7 +458,8 @@ function StepAnomalyReview({ sessionId, session, onRefresh, onNext, onBack }) {
       ) : (
         <div className="space-y-3 max-h-[480px] overflow-y-auto pr-1">
           {filtered.map((anomaly, i) => {
-            const resolved = resolutions[anomaly.id] || anomaly.resolution;
+            const resolvedValue = resolutions[anomaly.id] || anomaly.resolution;
+            const resolved = resolvedValue && resolvedValue !== 'PENDING' ? resolvedValue : null;
             return (
               <div
                 key={anomaly.id ?? i}
@@ -513,6 +518,9 @@ function StepAnomalyReview({ sessionId, session, onRefresh, onNext, onBack }) {
                   >
                     <option value="" disabled>
                       — Select action —
+                    </option>
+                    <option value="PENDING" disabled>
+                      — PENDING —
                     </option>
                     {RESOLUTION_OPTIONS.map((o) => (
                       <option key={o.value} value={o.value}>
