@@ -270,9 +270,13 @@ router.post('/:sessionId/confirm', authenticate, async (req, res) => {
       const rawAmount = effectiveRow.amount || '0';
       const currency = (effectiveRow.currency || 'INR').toUpperCase();
       const description = effectiveRow.description || '';
-      const payerName = effectiveRow.paid_by || '';
-      const splitAmong = (effectiveRow.split_among || '').split(',').map((s) => s.trim()).filter(Boolean);
-      const splitType = (effectiveRow.split_type || 'equal').toLowerCase();
+      const payerName = effectiveRow.paid_by || effectiveRow.paidBy || effectiveRow.Paid_By || '';
+      
+      const rawSplit = effectiveRow.split_among || effectiveRow.splitAmong || effectiveRow.split_with || '';
+      const splitAmong = String(rawSplit).split(/[,;]/).map((s) => s.trim()).filter(Boolean);
+      const splitType = (effectiveRow.split_type || effectiveRow.splitType || 'equal').toLowerCase();
+      
+      const rawDetails = effectiveRow.split_details || effectiveRow.splitDetails || '';
 
       // Parse date
       const dateMatch = rawDate.match(/\d{4}-\d{2}-\d{2}/) ||
@@ -312,8 +316,30 @@ router.post('/:sessionId/confirm', authenticate, async (req, res) => {
       // Convert currency
       const { amountInr, rate } = await convertToInr(amount, currency, expenseDate);
 
+      // Parse split_details for exact/percentage/shares
+      const splitConfig = { amounts: {}, percentages: {}, units: {} };
+      if (rawDetails) {
+        const parts = String(rawDetails).split(';');
+        for (const part of parts) {
+          const trimmed = part.trim();
+          if (!trimmed) continue;
+          const match = trimmed.match(/^([a-zA-Z\s]+)\s+([\d.]+)%?$/);
+          if (match) {
+            const name = match[1].trim().toLowerCase();
+            const val = parseFloat(match[2]);
+            const u = userByName[name];
+            if (u) {
+              if (splitType === 'exact' || splitType === 'unequal') splitConfig.amounts[u.id] = val;
+              if (splitType === 'percentage') splitConfig.percentages[u.id] = val;
+              if (splitType === 'share' || splitType === 'shares') splitConfig.units[u.id] = val;
+            }
+          }
+        }
+      }
+
       // Compute splits
-      const splits = computeSplits(amountInr, payer.id, splitMembers, splitType, {});
+      const normalizedSplitType = splitType === 'unequal' ? 'exact' : splitType === 'share' ? 'shares' : splitType;
+      const splits = computeSplits(amountInr, payer.id, splitMembers, normalizedSplitType, splitConfig);
 
       // Create expense
       const expense = await prisma.$transaction(async (tx) => {
