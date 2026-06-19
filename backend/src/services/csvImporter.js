@@ -200,15 +200,8 @@ function parseAndDetect(csvBuffer, knownUsers = [], memberships = []) {
           defaultResolution: 'SKIP',
         });
         parsedRow.status = 'ERROR';
-      } else if (ambiguous) {
-        rowAnomalies.push({
-          type: 'INCONSISTENT_DATE_FORMAT',
-          detail: `Ambiguous date "${rawDate}" interpreted as ${format}. Day (${date.getUTCDate()}) and month (${date.getUTCMonth() + 1}) are both ≤12 — could be either order.`,
-          severity: 'WARNING',
-          defaultResolution: 'KEEP',
-        });
-        if (parsedRow.status === 'CLEAN') parsedRow.status = 'WARNING';
       }
+      // Ambiguous dates (e.g. 05/03/2026) are silently accepted and auto-fixed now.
     }
 
     // ── PARSE AMOUNT + CHECK #2, #12, #13 ────────────────────

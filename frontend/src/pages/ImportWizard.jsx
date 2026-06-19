@@ -336,6 +336,7 @@ function StepAnomalyReview({ sessionId, session, onRefresh, onNext, onBack }) {
   const anomalies = session?.anomalies ?? [];
   const [filter, setFilter] = useState('all');
   const [resolutions, setResolutions] = useState({});
+  const [overrides, setOverrides] = useState({});
   const [batchLoading, setBatchLoading] = useState(false);
 
   const getSeverity = (a) => {
@@ -364,6 +365,24 @@ function StepAnomalyReview({ sessionId, session, onRefresh, onNext, onBack }) {
       await importApi.resolveAnomaly(sessionId, anomalyId, { resolution: value });
     } catch {
       // optimistic — keep local state
+    }
+  };
+
+  const handleOverrideChange = (anomalyId, field, value) => {
+    setOverrides(prev => ({
+       ...prev,
+       [anomalyId]: { ...(prev[anomalyId] || {}), [field]: value }
+    }));
+  };
+
+  const saveOverride = async (anomalyId) => {
+    const data = overrides[anomalyId];
+    if (!data) return;
+    try {
+      await importApi.resolveAnomaly(sessionId, anomalyId, { resolution: 'OVERRIDE', overrideData: data });
+      // We can trigger a refresh if we want, or just show it's saved.
+    } catch (err) {
+      console.error('Failed to save override', err);
     }
   };
 
@@ -529,6 +548,36 @@ function StepAnomalyReview({ sessionId, session, onRefresh, onNext, onBack }) {
                     ))}
                   </select>
                 </div>
+
+                {/* Override UI */}
+                {resolvedValue === 'OVERRIDE' && (
+                  <div className="p-3 bg-white/5 border border-white/10 rounded-xl space-y-3 mt-2 animate-fade-in">
+                    <p className="text-xs text-brand-400 font-medium">Override Row Data:</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      {['date', 'description', 'amount', 'currency', 'paid_by', 'split_among'].map(field => {
+                         const rawVal = anomaly.rawRow?.[field] || anomaly.rawData?.[field] || '';
+                         const val = overrides[anomaly.id]?.[field] !== undefined ? overrides[anomaly.id][field] : rawVal;
+                         return (
+                           <div key={field}>
+                             <label className="block text-[10px] text-white/50 uppercase tracking-wider mb-1">{field.replace('_', ' ')}</label>
+                             <input
+                               type="text"
+                               className="input-field py-1 px-2 text-xs"
+                               value={val}
+                               onChange={(e) => handleOverrideChange(anomaly.id, field, e.target.value)}
+                             />
+                           </div>
+                         )
+                      })}
+                    </div>
+                    <button
+                      className="btn-primary py-1.5 px-3 text-xs w-full mt-2"
+                      onClick={() => saveOverride(anomaly.id)}
+                    >
+                      Save Override Data
+                    </button>
+                  </div>
+                )}
               </div>
             );
           })}

@@ -51,10 +51,21 @@ app.use('/api/import', importRoutes);
 // Direct expense routes (for single expense by ID)
 app.use('/api/expenses', expenseRoutes);
 
-// ─── 404 ──────────────────────────────────────────────────────
-app.use((req, res) => {
-  res.status(404).json({ error: 'Not Found', message: `Route ${req.method} ${req.path} not found` });
-});
+// ─── FRONTEND & 404 ─────────────────────────────────────────
+if (process.env.NODE_ENV === 'production') {
+  // Serve the React frontend from dist folder
+  app.use(express.static(path.join(__dirname, '../../frontend/dist')));
+  
+  // Any route not caught by API will serve the React app (for client-side routing)
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../../frontend/dist/index.html'));
+  });
+} else {
+  // Development 404
+  app.use((req, res) => {
+    res.status(404).json({ error: 'Not Found', message: `Route ${req.method} ${req.path} not found` });
+  });
+}
 
 // ─── ERROR HANDLER ────────────────────────────────────────────
 app.use(errorHandler);
