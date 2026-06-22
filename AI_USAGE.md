@@ -1,108 +1,28 @@
-# AI_USAGE.md — AI Tool Usage Log
+# AI Usage Report
 
-## Tool Used
+## AI Tool Used
+**Antigravity** (Google DeepMind Agentic Coding Assistant powered by Gemini)
 
-**Antigravity (Claude Sonnet 4.6 Thinking)** — AI coding assistant embedded in VS Code.  
-Used for: architecture planning, code generation, documentation writing, and test writing.
-
----
-
-## Key Prompts & What They Produced
-
-### Prompt 1 — Initial Planning
-> *"Build a production-ready shared expenses web application for Spreetail. The spec includes [full 300-line prompt with schema, features, CSV anomalies, and build order]."*
-
-**Produced:** A comprehensive 5-page implementation plan covering tech stack justifications, 21 atomic commits, database schema with 10 tables, build sequence, and 3 open questions (CSV generation, deployment scope, seed users).
-
-**What I kept:** The overall plan, the 21-commit structure, the decision to create a synthetic CSV with 14+ anomalies.
-
-**What I changed:** Added `exchange_rate_cache` and `activity_log` tables not in the original plan (extra innovations).
+## Key Prompts Used
+1. *"Write two complete React JSX files for the Spreetail shared expenses app. Use TailwindCSS with the custom classes... Create a CSV Import Wizard at /groups/:groupId/import. A 5-step stepper UI."*
+2. *"The share people not showig up so calucalutate all these properly and how the zero amount if someone has to get none or give also show how much to get and give properly."*
+3. *"Make the UI for the override and rest parts as well."*
 
 ---
 
-### Prompt 2 — Prisma Schema
-> *"Generate the full Prisma schema with all 10 tables including field-level comments."*
+## Concrete Cases Where the AI Was Wrong & How It Was Fixed
 
-**Produced:** Complete `schema.prisma` with `users`, `groups`, `group_memberships`, `expenses`, `expense_splits`, `settlements`, `import_sessions`, `import_anomalies`, `exchange_rate_cache`, `activity_log` tables, proper foreign keys, unique constraints, and enums.
+### 1. PowerShell Syntax Errors in Build Commands
+* **What the AI did wrong:** When instructing me to test deployment commands locally, the AI provided chained bash commands using `&&` (e.g., `cd frontend && npm install && npm run build`). Since my terminal environment was Windows PowerShell, the `&&` operator threw a `ParserError`.
+* **How I caught it:** The terminal instantly spit out red text reading `The token '&&' is not a valid statement separator in this version.`
+* **What changed:** The AI adapted by recognizing the PowerShell limitation. Instead of relying on local PowerShell chained execution, we used NPM's `--prefix` flag (`npm install --prefix frontend`) which works universally, and ensured the `&&` syntax was only supplied for the Render environment (which uses Linux bash).
 
-**What I kept:** The full schema as-is.
+### 2. Incorrect Path Given for Database Seed Script
+* **What the AI did wrong:** When the database threw an error because it lacked tables/users, the AI told me to run `node src/scripts/seed.js` inside the Render Build Command to inject demo users.
+* **How I caught it:** The Render deployment failed completely, throwing a `MODULE_NOT_FOUND: Cannot find module '/opt/render/.../src/scripts/seed.js'`.
+* **What changed:** The AI used its terminal tools to inspect the backend directory tree. It discovered the script was actually located at `prisma/seed.js`, not `src/scripts/seed.js`. The AI provided the corrected build command (`node prisma/seed.js`) and explained the error.
 
-**What I changed:** Added `is_recurring` and `recurring_interval` fields to `expenses` for the recurring expense extra innovation. The AI initially forgot the `deleted_by` audit field — caught and added manually.
-
----
-
-### Prompt 3 — Balance Engine
-> *"Implement balanceEngine.js with membership window filtering and greedy debt simplification."*
-
-**Produced:** `balanceEngine.js` with `computeBalances()` fetching expenses + splits + memberships, applying the window filter, computing net balances, and `simplifyDebts()` using the greedy creditor/debtor matching algorithm.
-
-**What I caught as wrong:**  
-The first version of `simplifyDebts()` used `<=` instead of `< 0.01` for the zero check, which caused it to create "₹0.00 pay" transactions for already-balanced members. Corrected to filter `netBalance > 0.01` for creditors and `netBalance < -0.01` for debtors.
-
-**Lesson:** Floating-point comparisons need epsilon guards. `0.005 > 0` is true in JavaScript, but it shouldn't produce a settlement.
-
----
-
-### Prompt 4 — CSV Importer
-> *"Write csvImporter.js with all 14 anomaly detectors. Never silently fix or discard anything."*
-
-**Produced:** `csvImporter.js` with `parseAndDetect()` function running 14 named anomaly checks. Each check returns `{ type, detail, severity, defaultResolution }`. The deduplication logic tracks both exact and near-duplicates.
-
-**What I caught as wrong:**  
-The first version used `===` to compare amounts for the `DUPLICATE_DIFF_AMOUNT` check after parsing with `parseFloat`. This failed for `"$85"` vs `85` because the string comparison ran before stripping symbols. Fixed by running `parseAmount()` first, then comparing the numeric result.
-
-**Lesson:** Always normalize data before comparison. The currency symbol stripping must happen before deduplication tracking.
-
----
-
-### Prompt 5 — Split Engine Rounding
-> *"Implement all 4 split types with a consistent rounding policy. Document the policy in DECISIONS.md."*
-
-**Produced:** `splitEngine.js` with `computeEqualSplit`, `computeExactSplit`, `computePercentageSplit`, `computeSharesSplit`. All use `Math.floor(amount * 100) / 100` to avoid floating-point accumulation, with remainder assigned to the payer.
-
-**What I caught as wrong:**  
-The equal split first draft used `Math.round()` which could cause `sum(shares) > total_amount` by up to ₹0.49. Changed to `Math.floor()` with explicit remainder calculation. Verified: with 3 people splitting ₹1000, round gives [333.33, 333.33, 333.34] = 1000.00 ✓, but round can give [333.33, 333.33, 333.34] OR [333.34, 333.34, 333.32] depending on order. Floor guarantees [333.33, 333.33, 333.34] always with remainder to payer.
-
-**Lesson:** Financial rounding requires `floor`, not `round`. And always verify `sum(shares) === total_amount` in tests.
-
----
-
-### Prompt 6 — Import Wizard UI
-> *"Build a 5-step Import Wizard React component with a stepper, drag-drop upload, anomaly review table, and final report."*
-
-**Produced:** `ImportWizard.jsx` — 5-step stepper with file upload, parsed row table with ✅/⚠️/❌ status indicators, per-anomaly resolution dropdowns, confirmation step, and report.
-
-**What I caught as wrong:**  
-The first draft of the anomaly review step didn't disable the "Confirm Import" button when anomalies were still PENDING. The API would return a 400 error, but the UX was bad. Fixed: count `pendingCount = anomalies.filter(a => a.resolution === 'PENDING').length` and disable button + show warning count in the button label.
-
-**Lesson:** Backend validation is not a substitute for frontend validation. Surface blockers before the user tries to submit.
-
----
-
-## Bugs Caught & Corrected (AI Errors)
-
-### Bug 1: `simplifyDebts()` generating ₹0.00 transactions
-**What AI produced:** Used strict `=== 0` check which failed for floating point remainders like `0.0000000001`  
-**How I caught it:** Ran the unit test with a balanced group — it output one `{from: 'a', to: 'b', amount: 0}` transaction  
-**Fix:** Changed filter to `netBalance > 0.01` and `netBalance < -0.01`  
-**Learning:** Always use epsilon comparisons for financial floats. `Math.abs(x) < 0.01` is safer than `x === 0`.
-
-### Bug 2: Amount parser running comparison before stripping currency symbols
-**What AI produced:** `seenExact.set(exactKey, ...)` where `exactKey` included raw amount string like `"$85"` — this would never match `"85"`  
-**How I caught it:** The `DUPLICATE_EXACT` test passed but the `DUPLICATE_DIFF_AMOUNT` test failed for the CSV rows 44/45  
-**Fix:** Run `parseAmount()` before building the dedup key, use numeric amount in key  
-**Learning:** Normalize all data to canonical form before any comparison or key generation.
-
-### Bug 3: Percentage split percentages not summing due to float precision
-**What AI produced:** `percentages.reduce((a,b) => a+b, 0) === 100` — fails for `[33.33, 33.33, 33.34]` which sums to `100.00000000000001`  
-**How I caught it:** Unit test for 3-way percentage split threw "must sum to 100%" error  
-**Fix:** Changed to `Math.abs(totalPct - 100) > 0.01` tolerance check  
-**Learning:** Never use `===` for floating-point sums. Always allow a small tolerance.
-
----
-
-## AI Tool Limitations Observed
-
-1. **Long files lose context:** Very long JSX files (>300 lines) sometimes had inconsistent prop types at top vs usage at bottom — always review full files.
-2. **Mock data in tests:** AI initially generated tests that relied on actual DB connections. Had to redirect to pure function tests + mocked Prisma.
-3. **Import path assumptions:** AI sometimes wrote `import ... from './services/balanceEngine'` (missing `../`) — always check relative paths.
+### 3. Semicolon Delimiters Ignored in Split Engine
+* **What the AI did wrong:** The initial backend parsing logic assumed that the `split_with` column in the CSV was strictly comma-separated (e.g., `Aisha, Rohan, Priya`). However, the actual CSV contained semicolons (`Aisha;Rohan;Priya`). The AI's backend silently failed to parse the names, resulting in an empty split array. The system incorrectly defaulted to charging 100% of the expense to the payer.
+* **How I caught it:** I noticed that in the UI, the "YOUR SHARE" column was showing `—` (a dash indicating zero share) for almost every single expense, even ones I was supposed to be part of.
+* **What changed:** The AI inspected the `POST /confirm` logic in `import.js` and modified the string-splitting regex from a simple comma split to a regex that handles both commas and semicolons: `String(rawSplit).split(/[,;]/).map(s => s.trim())`. This correctly populated the `splitMembers` array, and the UI math instantly fixed itself.
